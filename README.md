@@ -79,4 +79,4 @@ Alternatively, run `MCP: Add Server` from the VS Code command palette for a guid
 
 ---
 
-Made with <3 at IIITH
+Made with <3 at IIITH by [Kallind Soni](https://github.com/Kallind) and [Arihant Tripathy](https://github.com/Arihant25)
