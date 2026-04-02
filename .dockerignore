@@ -1,6 +1,0 @@
-.env
-auth.txt
-*.ovpn
-__pycache__
-.venv
-.git
