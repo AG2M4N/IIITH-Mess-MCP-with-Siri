@@ -11,7 +11,7 @@ Voice-controlled meal management for IIIT Hyderabad mess system. Ask Siri what's
 
 ---
 
-## Quick Start (5 minutes)
+## Quick Start 
 
 ### Prerequisites
 - Raspberry Pi running on IIIT VPN
