@@ -53,10 +53,17 @@ def run_async(coro):
 
 
 def get_auth_context():
-    """Get auth_key from env or session from current_session"""
+    """Get auth_key from env or session from current_session, filtering out None values"""
+    auth = {}
     auth_key = os.environ.get("MESS_AUTH_KEY")
+    if auth_key:
+        auth["auth_key"] = auth_key
+    
     session = current_session.get("session")
-    return {"auth_key": auth_key, "session": session}
+    if session:
+        auth["session"] = session
+    
+    return auth
 
 
 def normalize_mess_name(mess_name):
@@ -88,12 +95,6 @@ def menus_list_to_dict(menus_result):
                 mess_id = item.get("mess")
                 if mess_id:
                     menus_dict[mess_id] = item
-    
-    # If empty, log for debugging
-    if not menus_dict:
-        print(f"[DEBUG] menus_list_to_dict: Could not convert menus. Result type: {type(menus_result)}")
-        if isinstance(menus_result, list) and menus_result:
-            print(f"[DEBUG] First item keys: {list(menus_result[0].keys()) if isinstance(menus_result[0], dict) else 'not a dict'}")
     
     return menus_dict
 
@@ -372,8 +373,8 @@ def interact():
         
         # CANCEL MEAL
         if action == "cancel":
-            date = data.get("date")
-            meal_type = data.get("meal_type")
+            date = data.get("date", "").strip()
+            meal_type = data.get("meal_type", "").strip().lower()
             
             if not all([date, meal_type]):
                 return jsonify({
@@ -381,7 +382,41 @@ def interact():
                     "spoken": "Missing date or meal type. Please provide both."
                 }), 400
             
+            # Parse date - handle various formats
+            from datetime import datetime
+            parsed_date = None
+            date_formats = [
+                "%Y-%m-%d",           # 2026-04-13
+                "%d %b %Y",           # 13 Apr 2026
+                "%d %b %Y at %I:%M %p",  # 13 Apr 2026 at 1:07 AM
+                "%d/%m/%Y",           # 13/04/2026
+                "%m/%d/%Y",           # 04/13/2026
+            ]
+            
+            for fmt in date_formats:
+                try:
+                    parsed_date = datetime.strptime(date, fmt)
+                    break
+                except ValueError:
+                    continue
+            
+            if not parsed_date:
+                return jsonify({
+                    "success": False,
+                    "spoken": f"Could not parse date '{date}'. Please use format YYYY-MM-DD (e.g., 2026-04-13)"
+                }), 400
+            
+            # Convert to YYYY-MM-DD format
+            date = parsed_date.strftime("%Y-%m-%d")
+            
             auth = get_auth_context()
+            # Check if auth credentials are available
+            if not auth:
+                return jsonify({
+                    "success": False,
+                    "spoken": "Error: No authentication credentials. Set MESS_AUTH_KEY in .env"
+                }), 401
+            
             params = MealDateTypeInput(
                 meal_date=date,
                 meal_type=meal_type,
@@ -391,10 +426,13 @@ def interact():
             
             # Check if error response
             if isinstance(result, dict) and result.get("error"):
-                error_msg = result.get("error", {}).get("message", "Unknown error") if isinstance(result.get("error"), dict) else result.get("error")
+                error_msg = result.get("error", {})
+                if isinstance(error_msg, dict):
+                    error_msg = error_msg.get("message", str(error_msg))
                 return jsonify({
                     "success": False,
-                    "spoken": f"Failed to cancel: {error_msg}"
+                    "spoken": f"Failed to cancel: {error_msg}",
+                    "debug": {"error_type": type(result.get("error")).__name__, "full_response": result}
                 }), 400
             
             # Success - result is {"ok": true}
@@ -422,19 +460,25 @@ def interact():
             from iiith_mess_mcp.server import mess_get_menus, MessMenuInput
             from datetime import datetime, timedelta
             
-            date = data.get("date")
+            date = data.get("date", "").strip() or None
             if not date:
                 date = datetime.now().strftime("%Y-%m-%d")
             
             # SMART: Get user's registrations for this date
             auth = get_auth_context()
+            if not auth:
+                return jsonify({
+                    "success": False,
+                    "spoken": "Error: No authentication credentials. Set MESS_AUTH_KEY in .env"
+                }), 401
+            
             registrations = []
             try:
                 params = GetRegistrationsInput(from_date=date, to_date=date, **auth)
                 reg_result = run_async(mess_get_registrations(params))
                 if isinstance(reg_result, list):
                     registrations = reg_result
-            except:
+            except Exception:
                 pass  # If can't get registrations, fall back to showing first mess
             
             # Build a map of meal_type -> mess_id from registrations
