@@ -3,9 +3,10 @@
 Voice-controlled meal management for IIIT Hyderabad mess system. Ask Siri what's for lunch, and it tells you. Cancel meals with a voice command.
 
 **Key Features:**
-- 🎙️ **Voice-controlled** - Ask Siri "What's for lunch?" 
+- 🎙️ **Voice-controlled** - Ask Siri "What's for lunch?" or "Cancel my meal"
 - 📅 **Auto-registration** - Cron job registers you for the entire month automatically
 - 🍽️ **Smart menus** - Shows meals for all your registered messes
+- ❌ **Cancel all meals** - Cancel a single meal or all meals for a date in one command
 - 📱 **iPhone-native** - No app installation needed, uses built-in Shortcuts app
 - 🔒 **Secure** - Runs on your Raspberry Pi, not in the cloud
 
@@ -61,7 +62,8 @@ Follow [SIRI_SHORTCUTS_GUIDE.md](SIRI_SHORTCUTS_GUIDE.md) to create:
    Dinner (palash): Biryani, Raita."
 
 "Hey Siri, cancel my meal"
-→ (asks for date and meal type, then cancels)
+→ (asks for date and meal type with menu, then cancels)
+   Can select: Breakfast, Lunch, Snacks, Dinner, or All
 ```
 
 ---
@@ -181,11 +183,18 @@ curl -X POST http://localhost:5000/api/interact \
   -d '{"action": "menu"}'
 ```
 
-**Cancel meal:**
+**Cancel single meal:**
 ```bash
 curl -X POST http://localhost:5000/api/interact \
   -H "Content-Type: application/json" \
   -d '{"action": "cancel", "date": "2026-04-10", "meal_type": "lunch"}'
+```
+
+**Cancel all meals for a date:**
+```bash
+curl -X POST http://localhost:5000/api/interact \
+  -H "Content-Type: application/json" \
+  -d '{"action": "cancel", "date": "2026-04-10", "meal_type": "all"}'
 ```
 
 ---

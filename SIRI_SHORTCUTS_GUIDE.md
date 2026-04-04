@@ -267,7 +267,9 @@ Registration complete: 93 success, 0 failed
 
 ## Shortcut 2: "Cancel my meal" (Cancel registration)
 
-**What it does:** Ask "Cancel my meal" and it asks for date/meal, then cancels
+**What it does:** Ask "Cancel my meal" and it asks for date and which meal(s) to cancel
+
+**Special Feature:** Can cancel a single meal (breakfast/lunch/snacks/dinner) OR all meals for that date!
 
 **Time:** 3 minutes
 
@@ -277,13 +279,19 @@ Registration complete: 93 success, 0 failed
 **Steps:**
 
 1. Create **new shortcut**
-2. Tap **+** → **Ask for Text**
-   - Prompt: `Date? (YYYY-MM-DD, minimum 2 days from now)`
+2. Tap **+** → **Ask for Date**
+   - Prompt: `Cancel meal for which date?`
    - Save as: `date`
 
-3. Tap **+** → **Ask for Text**
-   - Prompt: `Meal? (breakfast/lunch/snacks/dinner)`
-   - Save as: `meal`
+3. Tap **+** → **Choose from List**
+   - Prompt: `Which meal(s)?`
+   - Items:
+     - `breakfast`
+     - `lunch`
+     - `snacks`
+     - `dinner`
+     - `all` (cancels all meals for that date)
+   - Save as: `meal_type`
 
 4. Tap **+** → **URL**: `http://192.168.1.42:5000/api/interact`
 
@@ -295,7 +303,7 @@ Registration complete: 93 success, 0 failed
      {
        "action": "cancel",
        "date": "[date]",
-       "meal_type": "[meal]"
+       "meal_type": "[meal_type]"
      }
      ```
 
@@ -303,13 +311,13 @@ Registration complete: 93 success, 0 failed
 7. Tap **+** → **Speak Text**
 
 8. **Test:** Tap play ▶️
-   - It asks: "Date?"
-   - You type: "2026-04-05" (at least 2 days away)
-   - It asks: "Meal?"
-   - You type: "lunch"
-   - Hear: "Cancelled lunch on April 5, 2026"
+   - It asks: "Cancel meal for which date?"
+   - You pick date: April 5 (at least 2 days from now)
+   - It asks: "Which meal(s)?"
+   - You choose: "lunch" or "all"
+   - Hear: "Cancelled lunch on April 5, 2026" OR "Cancelled all meals on April 5, 2026: breakfast, lunch, dinner"
 
-9. **Add to Siri:** "Cancel my meal"
+9. **Add to Siri:** "Cancel my meal" (tap record 🎤 and say it)
 
 **Now say:** "Hey Siri, cancel my meal" ✅
 
@@ -321,9 +329,14 @@ Registration complete: 93 success, 0 failed
 "Hey Siri, what's for lunch?" → Shows today's menu
 
 "Hey Siri, cancel my meal" → Cancel a registered meal
+  • Choose date from calendar
+  • Choose meal: breakfast, lunch, snacks, dinner, or all
+  • Siri confirms the cancellation
 ```
 
 ✅ **Auto-registration:** Cron job handles monthly registration on the 27th
+
+✅ **Cancel all meals:** Select "all" to cancel every meal for that date in one tap
 
 No need to say "register me" anymore!
 
@@ -338,12 +351,19 @@ No need to say "register me" anymore!
 - Today is April 3, so earliest registration is April 5
 - Try again with a date like "2026-04-05" or later
 
-### ❌ "Cancellation/Uncancellation is only allowed a minimum of 2 days before the meal date"
+### ❌ "Cancellation is only allowed a minimum of 2 days before the meal date"
 
 **Fix:**
 - Only cancel meals that are **at least 2 days in the future**
 - You cannot cancel meals that are tomorrow or day-after-tomorrow
 - Try cancelling a meal that's further away
+
+### ❌ "No meals registered for [date]"
+
+**Fix:**
+- You don't have any meals registered for that date
+- Check your auto-registration is set up (cron job on 27th)
+- Try with a date in the upcoming month (May if it's still April)
 
 ### ❌ Shortcut says "Connection refused"
 
@@ -390,6 +410,13 @@ No need to say "register me" anymore!
 1. On iPhone, toggle the **mute switch** on the side (near volume buttons)
 2. Make sure volume is turned up
 3. Try **Speak Text** action with a static text first to verify it works
+
+### ❌ "Choose from List" not appearing
+
+**Fix:**
+1. Make sure you're using iOS 13 or later (has the "Choose from List" action)
+2. If using older iOS, use "Ask for Text" instead and type the meal name
+3. Check that the list items are correctly spelled: breakfast, lunch, snacks, dinner, all
 
 ---
 
